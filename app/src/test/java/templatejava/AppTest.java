@@ -25,6 +25,6 @@ public class AppTest {
 	@Test
    	public void appHasTest() {
         App classUnderTest = new App();
-		assertEquals( classUnderTest.getGreeting(), "Algo", "Fail");
+		assertEquals( classUnderTest.getGreeting(), "Hello World!", "Not Fail");
 	}
 }
