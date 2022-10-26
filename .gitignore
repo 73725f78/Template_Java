@@ -1,7 +1,4 @@
 .git
-.gradle
-app/build
-app/bin
-app/.classpath
-app/.project
-app/.settings/
+build/
+lib/
+

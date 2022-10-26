@@ -1,0 +1,106 @@
+<project name="junit-example" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<description> This is my best Ant project </description>
+
+	<target name="resolve">
+		<ivy:retrieve/>
+	</target>
+
+	<property name="main.class" value="Main"/>
+	<property name="jar.name" value="Main.jar"/>
+
+	<property name="lib.dir"     value="lib"/>
+	<property name="build.dir" value="build/"/>
+	<property name="jar.dir" value="${build.dir}/jar"/>
+
+	<property name="main.src.dir" value="src/main/java"/>
+	<property name="test.src.dir" value="src/test/java"/>
+	<property name="resources.src.dir" value="src/main/resources"/>
+
+	<property name="main.build.dir" value="${build.dir}/main"/>
+	<property name="resources.build.dir" value="${build.dir}/resources"/>
+	<property name="test.build.dir" value="${build.dir}/test"/>
+	<property name="test.reports.dir" value="${test.build.dir}/reports/"/>
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="*.jar"/>
+		<pathelement location="${main.build.dir}"/>
+		<pathelement location="${resources.build.dir}"/>
+	</path>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="${lib.dir}"/>
+	</target>
+
+	<target name="compile" description="Compile java classes">
+		<mkdir dir="${main.build.dir}"/>
+		<javac srcdir="${main.src.dir}" destdir="${main.build.dir}" includeantruntime="false" classpathref="classpath"/>
+
+		<copy todir="${resources.build.dir}">
+			<fileset dir="${resources.src.dir}" includes="*.xml"/>            
+		</copy>
+
+		<!--Compile tests, it could be in another task-->
+		<mkdir dir="${test.build.dir}"/>
+		<javac srcdir="${test.src.dir}" destdir="${test.build.dir}" includeantruntime="false" classpathref="classpath"/>
+	</target>
+
+	<target name="jar" depends="compile" description="Create jar file">
+		<mkdir dir="${jar.dir}"/>
+		<jar destfile="${jar.dir}/${jar.name}" basedir="${main.build.dir}">
+			<manifest>
+				<attribute name="Main-Class" value="${main.class}"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="runjar" depends="jar">
+		<java jar="${jar.dir}/${jar.name}" fork="true">
+			<classpath refid="classpath" />
+		</java>
+	</target>
+
+	<target name="run" depends="jar" description="run Main class (main method)">
+		<java classname="${main.class}">
+			<classpath refid="classpath" />
+		</java>
+	</target>
+
+	<!--Testings Junit!-->
+
+	<target name="run_tests" depends="compile">
+		<mkdir dir="${test.reports.dir}"/>
+        <junitlauncher>
+            <classpath>
+				<pathelement location="${test.build.dir}"/>
+				<path refid="classpath" />
+            </classpath>
+            <testclasses outputdir="${test.reports.dir}">
+                <fileset  dir="${test.build.dir}"/>
+				<listener type="legacy-brief" sendSysOut="true"/>
+				<listener type="legacy-xml"   sendSysErr="true" sendSysOut="true"/>
+            </testclasses>
+        </junitlauncher>
+    </target>
+
+	<target name="print_tests">
+        <java classpathref="classpath" classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+            <arg value="--scan-classpath"/>
+            <arg line="--reports-dir ${test.reports.dir}"/>
+            <classpath>
+                <pathelement location="${test.build.dir}"/>
+            </classpath>
+		</java>
+
+		<junitreport todir="${test.reports.dir}">
+			<fileset dir="${test.reports.dir}">
+				<include name="TEST-*.xml"/>
+			</fileset>
+			<report format="frames" todir="${test.reports.dir}/html"/>
+		</junitreport>
+    </target>
+
+	<target name="tests" depends="run_tests, print_tests" description="run tests, and generate reports" />
+
+</project>
